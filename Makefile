@@ -44,5 +44,8 @@ poetry_lock:
 test:
 	docker-compose run app pytest
 
-simple_start: build  up  migrate  createsuperuser  collectstatic
+process_env:
+	[ -f .env ] || cp .example.env .env
+
+simple_start: process_env  build  up  migrate  collectstatic  createsuperuser
 
