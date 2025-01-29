@@ -24,3 +24,5 @@ SUSPICIOUS_WORDS_CHECK=True if you want to use chatpgt for filling obscene words
 ### Urls
 * REST api - [ninja docs](http://localhost:8000/api/docs)
 * Admin panel - [django admin](http://localhost:8000/admin)
+  * Username: admin
+  * Password: admin
