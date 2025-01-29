@@ -2,6 +2,8 @@ import pytest
 
 from api.internal.obscenity_filter.models import ObsceneWord
 from api.internal.obscenity_filter.services.obscenity_filter import ObscenityFilterService
+from api.internal.obscenity_filter.services.transfromations import collapse_repeating_characters, \
+    replace_numbers_to_letters, replace_similar_latin_to_cyrillic
 
 
 @pytest.fixture
@@ -52,24 +54,24 @@ def test_normalize_word(fill_obscene_words, obscenity_filter_service, new_word, 
         ("000000001111111", "01"),
     ],
 )
-def test_collapse_word(obscenity_filter_service, word, collapsed_word):
-    assert collapsed_word == obscenity_filter_service.collapse_repeating_characters(word)
+def test_collapse_word(word, collapsed_word):
+    assert collapsed_word == collapse_repeating_characters(word)
 
 
 @pytest.mark.parametrize(
     "word, numbers_translated_word",
     [("П1во", "Пиво"), ("Пр0гулять", "Прогулять"), ("0123456789", "ои2зчsбгВ9")],
 )
-def test_numbers_translate(obscenity_filter_service, word, numbers_translated_word):
-    assert numbers_translated_word == obscenity_filter_service.replace_numbers_to_letters(word)
+def test_numbers_translate(word, numbers_translated_word):
+    assert numbers_translated_word == replace_numbers_to_letters(word)
 
 
 @pytest.mark.parametrize(
     "word, transformed_word",
     [("ypoк", "урок"), ("Taпoк", "Тапок")],
 )
-def test_replace_similar_latin_to_cyrillic(obscenity_filter_service, word, transformed_word):
-    assert transformed_word == obscenity_filter_service.replace_similar_latin_to_cyrillic(word)
+def test_replace_similar_latin_to_cyrillic(word, transformed_word):
+    assert transformed_word == replace_similar_latin_to_cyrillic(word)
 
 
 @pytest.mark.parametrize(
