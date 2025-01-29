@@ -3,9 +3,11 @@ import io
 
 from django import forms
 from django.contrib import admin
+from django.core.checks import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import path
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from api.internal.obscenity_filter.app import obscenity_filter_service
@@ -92,6 +94,7 @@ class DefaultStatusFilter(admin.SimpleListFilter):
 class SuspiciousWordAdmin(admin.ModelAdmin):
     readonly_fields = ["value", "status"]
     list_display = ["value", "status", "approve_button", "reject_button"]
+    list_display_links = None
     search_fields = ["value"]
     list_filter = (DefaultStatusFilter,)
 
@@ -111,15 +114,21 @@ class SuspiciousWordAdmin(admin.ModelAdmin):
 
     def approve_view(self, request, suspiciousword_id):
         suspicious_word = SuspiciousWord.objects.get(id=suspiciousword_id)
-        suspicious_word.status = SuspiciousWord.SuspiciousWordStatuses.ADDED
-        suspicious_word.save()
-        obscenity_filter_service.create_obscene_word(suspicious_word.value)
-        self.message_user(request, "Word was added to obscene dict!")
+        if suspicious_word.status == SuspiciousWord.SuspiciousWordStatuses.PENDING:
+            suspicious_word.status = SuspiciousWord.SuspiciousWordStatuses.ADDED
+            suspicious_word.save()
+            obscenity_filter_service.create_obscene_word(suspicious_word.value)
+            self.message_user(request, "Word was added to obscene dict!", level=messages.INFO)
+        else:
+            self.message_user(request, "You can manipulate only PENDING words!", level=messages.WARNING)
         return HttpResponseRedirect(f'/admin/api/suspiciousword/')
 
     def reject_view(self, request, suspiciousword_id):
         suspicious_word = SuspiciousWord.objects.get(id=suspiciousword_id)
-        suspicious_word.status = SuspiciousWord.SuspiciousWordStatuses.DECLINED
-        suspicious_word.save()
-        self.message_user(request, "Word was added to obscene dict!")
+        if suspicious_word.status == SuspiciousWord.SuspiciousWordStatuses.PENDING:
+            suspicious_word.status = SuspiciousWord.SuspiciousWordStatuses.DECLINED
+            suspicious_word.save()
+            self.message_user(request, "Word was rejected!", level=messages.INFO)
+        else:
+            self.message_user(request, "You can manipulate only PENDING words!", level=messages.WARNING)
         return HttpResponseRedirect(f'/admin/api/suspiciousword/')
